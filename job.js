@@ -2,7 +2,7 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 const cron = require("node-cron");
-const MODE = process.env.MODE || "cron"; // "webhook" or "cron"
+const MODE = process.env.MODE || "webhook"; // "webhook" or "cron"
 const TIMEZONE = "Europe/London";
 
 const API_URL = "https://qy64m4juabaffl7tjakii4gdoa.appsync-api.eu-west-1.amazonaws.com/graphql";

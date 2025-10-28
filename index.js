@@ -1,9 +1,9 @@
 require("dotenv").config();
 const express = require("express");
 const { fetchAndStoreJobs } = require("./job"); // <-- We'll put job logic in jobs.js
-const cron = require("node-cron");
+//const cron = require("node-cron");
 
-const MODE = process.env.MODE || "cron"; // "webhook" or "cron"
+const MODE = process.env.MODE || "webhook"; // "webhook" or "cron"
 const TIMEZONE = "Europe/London";
 
 // ----- WEBHOOK MODE -----

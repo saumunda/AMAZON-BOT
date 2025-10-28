@@ -11,11 +11,6 @@ app.use(bodyParser.json());
 
 const API_URL = "https://qy64m4juabaffl7tjakii4gdoa.appsync-api.eu-west-1.amazonaws.com/graphql";
 const AUTH_TOKEN = `Bearer ${process.env.AUTH_TOKEN}`;
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-const TELEGRAM_IDS = [
-  process.env.TELEGRAM_USER_ID,
-  process.env.TELEGRAM_USER_ID2,
-];
 const LAST_MSG_FILE = path.join(__dirname, "lastMessage.json");
 
 const GRAPHQL_QUERY = {
@@ -46,21 +41,6 @@ const GRAPHQL_QUERY = {
 };
 
 const log = (msg) => console.log(`[${new Date().toISOString()}] ${msg}`);
-
-const sendToTelegramUsers = async (message) => {
-  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-  for (const id of TELEGRAM_IDS) {
-    if (!id) continue;
-    try {
-      await axios.post(url, {
-        chat_id: id,
-        text: message,
-      });
-    } catch (err) {
-      log(`❌ Failed to send message to ${id}: ${err.message}`);
-    }
-  }
-};
 
 const getJobMessage = async () =>  {
   try {
@@ -118,8 +98,7 @@ const fetchAndStoreJobs = async () => {
     const jobMsg = await getJobMessage();
 
     if (jobMsg !== lastMessageSent) {
-      log("🔁 Sending updated job message...");
-      await sendToTelegramUsers(jobMsg);
+      log("🔁 Job fetching...");
       lastMessageSent = jobMsg;
       fs.writeFileSync(LAST_MSG_FILE, JSON.stringify({ message: jobMsg }, null, 2));
     } else {
@@ -128,7 +107,6 @@ const fetchAndStoreJobs = async () => {
   } catch (err) {
     const msg = "❌ Error running scheduled job check: " + err.message;
     log(msg);
-    await sendToTelegramUsers(msg);
   }
 };
 
@@ -136,38 +114,21 @@ const fetchAndStoreJobs = async () => {
 const start20MinuteJobInterval = () => {
   const msg = "⏳ Started 1-minute interval fetch for 20 minutes...";
   log(msg);
-  sendToTelegramUsers(msg);
-
+  
   let count = 0;
   const intervalId = setInterval(async () => {
     await fetchAndStoreJobs();
     count++;
-    if (count >= 20) {
+    if (count >= 2400) {
       clearInterval(intervalId);
       const msg = "💤 System Standby... 🖥️ Scheduled Job Check completed.";
       log(msg);
-      sendToTelegramUsers(msg);
     }
-  }, 60 * 1000); // every 1 minute
+  }, 1000); // every 1 minute
 };
-
-// ✅ Schedule at 11:01 AM London time
-cron.schedule("2 11 * * *", async () => {
-  const msg = "🕚 Clock’s Ticking! ⚡ Job Check Set for 11:00 AM London Time.";
-  log(msg);
-  await sendToTelegramUsers(msg);
-  start20MinuteJobInterval();
-}, { timezone: "Europe/London" });
-
-// ✅ Schedule at 11:01 PM London time
-cron.schedule("2 23 * * *", async () => {
-  const msg = "🌙 Countdown Active: Job Status Update at 11:01 PM London Time.";
-  log(msg);
-  await sendToTelegramUsers(msg);
-  start20MinuteJobInterval();
-}, { timezone: "Europe/London" });
 
 // Optional: run once at server start
 fetchAndStoreJobs();
+start20MinuteJobInterval();
 
 module.exports = { getJobMessage };
